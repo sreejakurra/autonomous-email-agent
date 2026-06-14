@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Sorter Bot - AI Powered Email Assistant</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+        
+        .header {
+            background: white;
+            border-radius: 15px;
+            padding: 25px 30px;
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .user-info { display: flex; align-items: center; gap: 15px; }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .btn-secondary { background: #6c757d; color: white; }
+        .btn-danger { background: #dc3545; color: white; }
+        .btn-success { background: #28a745; color: white; }
+        
+        .btn-primary:hover, .btn-secondary:hover, .btn-danger:hover, .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+        
+        .stat-card:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(0,0,0,0.15); }
+        .stat-number { font-size: 32px; font-weight: bold; color: #667eea; }
+        .stat-label { color: #666; margin-top: 5px; font-size: 13px; }
+        
+        .search-bar {
+            background: white;
+            padding: 12px 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .search-bar input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        
+        .search-bar input:focus { outline: none; border-color: #667eea; }
+        
+        .action-bar { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        
+        .progress-container {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            display: none;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .progress-bar {
+            height: 30px;
+            background: #e0e0e0;
+            border-radius: 15px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            width: 0%;
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .email-list {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            max-height: 550px;
+            overflow-y: auto;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+        
+        .email-item {
+            border-bottom: 1px solid #e0e0e0;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .email-item:hover { background: #f8f9fa; transform: translateX(5px); }
+        
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-right: 6px;
+        }
+        
+        .badge-high { background: #ffebee; color: #c62828; }
+        .badge-medium { background: #fff3e0; color: #f57c00; }
+        .badge-low { background: #e8f5e9; color: #2e7d32; }
+        
+        .category-badge { background: #e3f2fd; color: #1976d2; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+        
+        .email-subject { font-weight: 600; margin: 8px 0 5px; font-size: 16px; color: #333; }
+        .email-summary { color: #666; font-size: 13px; line-height: 1.4; }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            background: white;
+            margin: 3% auto;
+            width: 750px;
+            max-width: 90%;
+            border-radius: 20px;
+            max-height: 90%;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        .modal-header {
+            padding: 20px 25px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            background: white;
+            border-radius: 20px 20px 0 0;
+        }
+        
+        .modal-body { padding: 25px; }
+        .modal-footer {
+            padding: 20px 25px;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            position: sticky;
+            bottom: 0;
+            background: white;
+            border-radius: 0 0 20px 20px;
+        }
+        
+        .close { cursor: pointer; font-size: 28px; color: #999; transition: color 0.3s; }
+        .close:hover { color: #333; }
+        
+        .detail-section { margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #f0f0f0; }
+        .detail-label { font-weight: 600; color: #667eea; margin-bottom: 8px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .summary-text { background: #f8f9fa; padding: 15px; border-radius: 10px; line-height: 1.6; color: #333; }
+        
+        .links-list { list-style: none; }
+        .links-list li { margin: 8px 0; }
+        .links-list a {
+            color: #667eea;
+            text-decoration: none;
+            word-break: break-all;
+            font-size: 13px;
+            font-family: monospace;
+        }
+        .links-list a:hover { text-decoration: underline; }
+        
+        .attachments-list { display: flex; flex-wrap: wrap; gap: 10px; }
+        .attachment-item {
+            background: #f0f0f0;
+            padding: 8px 12px;
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+        }
+        .attachment-item i { color: #667eea; }
+        
+        .body-preview {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            font-family: monospace;
+            font-size: 13px;
+            line-height: 1.5;
+            color: #555;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .ai-reply-box {
+            background: #e8f5e9;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            white-space: pre-wrap;
+            font-size: 13px;
+            line-height: 1.5;
+            border-left: 4px solid #28a745;
+        }
+        
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-family: inherit;
+            resize: vertical;
+            font-size: 13px;
+        }
+        
+        .empty-state { text-align: center; padding: 60px 20px; color: #999; }
+        .empty-state i { font-size: 48px; margin-bottom: 15px; color: #ddd; }
+        
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 1100;
+            animation: slideIn 0.3s;
+        }
+        .toast.success { border-left: 4px solid #28a745; }
+        .toast.error { border-left: 4px solid #dc3545; }
+        .toast.info { border-left: 4px solid #17a2b8; }
+        
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #fff;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            margin-right: 8px;
+        }
+        
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        @media (max-width: 768px) {
+            .container { padding: 10px; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .modal-content { width: 95%; margin: 5% auto; }
+        }
+        
+        .link-short {
+            font-family: monospace;
+            background: #f0f0f0;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        
+        .notification-badge { background: #e0e0e0; color: #666; }
+        .course-badge { background: #fff3e0; color: #f57c00; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-envelope-open-text"></i> Email Sorter Bot</h1>
+            <div class="user-info">
+                <span id="userEmailDisplay"><i class="fas fa-check-circle" style="color:#28a745;"></i> Connected</span>
+            </div>
+        </div>
+        
+        <div class="stats-grid">
+            <div class="stat-card" onclick="filterEmails('all')"><div class="stat-number" id="totalEmails">0</div><div class="stat-label">📧 Total</div></div>
+            <div class="stat-card" onclick="filterEmails('HIGH')"><div class="stat-number" id="highPriority">0</div><div class="stat-label">🔴 High</div></div>
+            <div class="stat-card" onclick="filterEmails('MEDIUM')"><div class="stat-number" id="mediumPriority">0</div><div class="stat-label">🟡 Medium</div></div>
+            <div class="stat-card" onclick="filterEmails('LOW')"><div class="stat-number" id="lowPriority">0</div><div class="stat-label">🟢 Low</div></div>
+            <div class="stat-card" onclick="filterEmails('action')"><div class="stat-number" id="actionNeeded">0</div><div class="stat-label">⚠️ Action</div></div>
+        </div>
+        
+        <div class="search-bar">
+            <i class="fas fa-search" style="color: #999; align-self: center;"></i>
+            <input type="text" id="searchInput" placeholder="Search by subject, sender, or summary..." onkeyup="searchEmails()">
+            <button class="btn btn-secondary" onclick="clearSearch()">Clear</button>
+        </div>
+        
+        <div class="action-bar">
+            <button class="btn btn-primary" onclick="startAnalysis()"><i class="fas fa-play"></i> Process New Emails</button>
+            <button class="btn btn-secondary" onclick="refreshData()"><i class="fas fa-sync-alt"></i> Refresh</button>
+            <button class="btn btn-danger" onclick="clearHistory()"><i class="fas fa-trash-alt"></i> Clear History</button>
+        </div>
+        
+        <div id="progressContainer" class="progress-container">
+            <div class="progress-bar"><div class="progress-fill" id="progressFill">0%</div></div>
+            <p style="margin-top: 10px; text-align: center; font-size: 13px;"><i class="fas fa-robot"></i> AI is analyzing your emails...</p>
+        </div>
+        
+        <div class="email-list" id="emailList">
+            <div class="empty-state"><i class="fas fa-inbox"></i><p>No emails processed yet. Click "Process New Emails" to start!</p></div>
+        </div>
+    </div>
+    
+    <div id="emailModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-envelope"></i> Email Details</h3>
+                <span class="close" onclick="closeModal()">&times;</span>
+            </div>
+            <div class="modal-body" id="modalBody"></div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal()">Close</button>
+                <button class="btn btn-success" id="genReplyBtn" onclick="generateReply()"><i class="fas fa-robot"></i> Generate AI Reply</button>
+                <button class="btn btn-primary" id="sendReplyBtn" style="display:none;" onclick="sendReply()"><i class="fas fa-paper-plane"></i> Send Reply</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let currentEmail = null;
+        let currentGeneratedReply = null;
+        let currentFilter = 'all';
+        let pollingInterval = null;
+        
+        function shortenUrl(url, maxLen = 45) {
+            if (!url) return '';
+            if (url.length <= maxLen) return url;
+            try {
+                let domain = url.replace(/^https?:\/\//, '').replace(/^www\./, '');
+                let parts = domain.split('/');
+                let domainName = parts[0];
+                let path = parts.slice(1).join('/');
+                if (path.length > 20) path = path.substring(0, 17) + '...';
+                let short = domainName;
+                if (path) short += '/' + path;
+                if (short.length > maxLen) short = short.substring(0, maxLen - 3) + '...';
+                return short;
+            } catch(e) { return url.substring(0, maxLen - 3) + '...'; }
+        }
+        
+        async function checkSession() {
+            try {
+                const response = await fetch('/api/check-session');
+                const data = await response.json();
+                if (data.logged_in) {
+                    document.getElementById('userEmailDisplay').innerHTML = `<i class="fas fa-check-circle" style="color:#28a745;"></i> ${data.email}`;
+                    refreshData();
+                }
+            } catch (error) { console.error('Session check failed:', error); }
+        }
+        
+        async function startAnalysis() {
+            document.getElementById('progressContainer').style.display = 'block';
+            document.getElementById('progressFill').style.width = '0%';
+            try {
+                const response = await fetch('/api/analyze', { method: 'POST' });
+                const data = await response.json();
+                if (data.status === 'started') startPolling();
+                else if (data.status === 'already_running') startPolling();
+            } catch (error) { showToast('Failed to start analysis', 'error'); document.getElementById('progressContainer').style.display = 'none'; }
+        }
+        
+        function startPolling() {
+            if (pollingInterval) clearInterval(pollingInterval);
+            pollingInterval = setInterval(async () => {
+                try {
+                    const response = await fetch('/api/status');
+                    const data = await response.json();
+                    document.getElementById('progressFill').style.width = `${data.progress}%`;
+                    document.getElementById('progressFill').textContent = `${data.progress}%`;
+                    if (!data.in_progress) {
+                        clearInterval(pollingInterval);
+                        pollingInterval = null;
+                        setTimeout(() => {
+                            document.getElementById('progressContainer').style.display = 'none';
+                            refreshData();
+                            showToast('Email processing completed!', 'success');
+                        }, 1000);
+                    }
+                } catch (error) { clearInterval(pollingInterval); }
+            }, 2000);
+        }
+        
+        async function refreshData() { await loadStats(); await loadEmails(); }
+        
+        async function loadStats() {
+            try {
+                const response = await fetch('/api/stats');
+                const stats = await response.json();
+                document.getElementById('totalEmails').textContent = stats.total || 0;
+                document.getElementById('highPriority').textContent = stats.high_priority || 0;
+                document.getElementById('mediumPriority').textContent = stats.medium_priority || 0;
+                document.getElementById('lowPriority').textContent = stats.low_priority || 0;
+                document.getElementById('actionNeeded').textContent = stats.action_needed || 0;
+            } catch (error) { console.error('Error loading stats:', error); }
+        }
+        
+        async function loadEmails() {
+            const searchTerm = document.getElementById('searchInput').value;
+            let url = '/api/emails?limit=100';
+            if (searchTerm) url += `&search=${encodeURIComponent(searchTerm)}`;
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                let emails = data.emails || [];
+                if (currentFilter === 'HIGH') emails = emails.filter(e => e.priority === 'HIGH');
+                else if (currentFilter === 'MEDIUM') emails = emails.filter(e => e.priority === 'MEDIUM');
+                else if (currentFilter === 'LOW') emails = emails.filter(e => e.priority === 'LOW');
+                else if (currentFilter === 'action') emails = emails.filter(e => e.action_needed);
+                displayEmails(emails);
+            } catch (error) { console.error('Error loading emails:', error); }
+        }
+        
+        function getCategoryBadgeClass(category) {
+            if (category === 'Notification') return 'notification-badge';
+            if (category === 'Course Promotion') return 'course-badge';
+            return 'category-badge';
+        }
+        
+        function displayEmails(emails) {
+            const container = document.getElementById('emailList');
+            if (emails.length === 0) {
+                container.innerHTML = `<div class="empty-state"><i class="fas fa-inbox"></i><p>No emails found</p></div>`;
+                return;
+            }
+            container.innerHTML = emails.map(email => `
+                <div class="email-item" onclick="showEmailDetail('${email.email_id}')">
+                    <div>
+                        <span class="badge badge-${email.priority?.toLowerCase()}">${email.priority || 'LOW'}</span>
+                        <span class="${getCategoryBadgeClass(email.category)}">${email.category || 'Other'}</span>
+                        ${email.action_needed ? '<span class="badge" style="background:#fff3e0;color:#f57c00;">⚠️ Action</span>' : ''}
+                        ${email.replied ? '<span class="badge" style="background:#e8f5e9;color:#2e7d32;">✓ Replied</span>' : ''}
+                        ${email.attachments && email.attachments.length > 0 ? `<span class="badge" style="background:#f0f0f0;"><i class="fas fa-paperclip"></i> ${email.attachments.length}</span>` : ''}
+                        ${email.links && email.links.length > 0 ? `<span class="badge" style="background:#f0f0f0;"><i class="fas fa-link"></i> ${email.links.length}</span>` : ''}
+                    </div>
+                    <div class="email-subject">${escapeHtml(email.subject || 'No Subject')}</div>
+                    <div class="email-summary">${escapeHtml(email.summary || 'No summary available')}</div>
+                    <div style="color: #999; font-size: 11px; margin-top: 8px;">
+                        <i class="fas fa-user"></i> ${escapeHtml(email.sender?.split('<')[0]?.trim() || 'Unknown')}
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        async function showEmailDetail(emailId) {
+            try {
+                const response = await fetch('/api/emails');
+                const data = await response.json();
+                currentEmail = data.emails.find(e => e.email_id === emailId);
+                if (!currentEmail) return;
+                
+                let attachmentsHtml = '';
+                if (currentEmail.attachments && currentEmail.attachments.length > 0) {
+                    attachmentsHtml = `<div class="detail-section"><div class="detail-label"><i class="fas fa-paperclip"></i> Attachments (${currentEmail.attachments.length})</div>
+                        <div class="attachments-list">${currentEmail.attachments.map(att => `<div class="attachment-item"><i class="fas fa-file"></i><span>${escapeHtml(att.name)}</span><small style="color:#999;">(${att.summary})</small></div>`).join('')}</div></div>`;
+                }
+                
+                let linksHtml = '';
+                if (currentEmail.links && currentEmail.links.length > 0) {
+                    linksHtml = `<div class="detail-section"><div class="detail-label"><i class="fas fa-link"></i> Links Found (${currentEmail.links.length})</div>
+                        <ul class="links-list">${currentEmail.links.map(link => `<li><a href="${escapeHtml(link.full_url)}" target="_blank" title="${escapeHtml(link.full_url)}">🔗 ${escapeHtml(link.short_url)}</a></li>`).join('')}</ul></div>`;
+                }
+                
+                let categoryBadgeClass = getCategoryBadgeClass(currentEmail.category);
+                let isNoReply = (currentEmail.category === 'Notification' || currentEmail.category === 'Course Promotion');
+                
+                document.getElementById('modalBody').innerHTML = `
+                    <div class="detail-section"><div class="detail-label"><i class="fas fa-user"></i> From</div><div>${escapeHtml(currentEmail.sender || 'Unknown')}</div></div>
+                    <div class="detail-section"><div class="detail-label"><i class="fas fa-tag"></i> Subject</div><div><strong>${escapeHtml(currentEmail.subject || 'No Subject')}</strong></div></div>
+                    <div class="detail-section"><div class="detail-label"><i class="fas fa-chart-simple"></i> Priority & Category</div>
+                        <div><span class="badge badge-${currentEmail.priority?.toLowerCase()}">${currentEmail.priority || 'LOW'}</span>
+                        <span class="${categoryBadgeClass}">${currentEmail.category || 'Other'}</span>
+                        ${currentEmail.action_needed ? '<span class="badge" style="background:#fff3e0;color:#f57c00;">⚠️ Action Required</span>' : ''}</div></div>
+                    <div class="detail-section"><div class="detail-label"><i class="fas fa-align-left"></i> AI Summary</div><div class="summary-text">${escapeHtml(currentEmail.summary || 'No summary available')}</div></div>
+                    ${attachmentsHtml}${linksHtml}
+                    <div class="detail-section"><div class="detail-label"><i class="fas fa-eye"></i> Body Preview</div><div class="body-preview">${escapeHtml(currentEmail.body_preview || currentEmail.body?.substring(0, 300) || 'No content')}</div></div>
+                    <div id="replyContainer" style="display:none;">
+                        <div class="detail-section"><div class="detail-label"><i class="fas fa-robot"></i> AI Generated Reply</div><div class="ai-reply-box" id="aiReplyText"></div>
+                        <div style="margin-top: 10px; display: flex; gap: 10px;"><button class="btn btn-success" onclick="useAIReply()">Use This Reply</button>
+                        <button class="btn btn-secondary" onclick="composeManualReply()">Compose Manually</button></div></div>
+                    </div>
+                    <div id="manualReplyContainer" style="display:none;">
+                        <div class="detail-section"><div class="detail-label"><i class="fas fa-pen"></i> Your Reply</div><textarea id="manualReply" rows="6" placeholder="Type your reply here..."></textarea></div>
+                    </div>
+                `;
+                
+                document.getElementById('emailModal').style.display = 'block';
+                if (isNoReply || !currentEmail.action_needed) {
+                    document.getElementById('genReplyBtn').style.display = 'none';
+                    document.getElementById('genReplyBtn').disabled = true;
+                } else {
+                    document.getElementById('genReplyBtn').style.display = 'inline-block';
+                    document.getElementById('genReplyBtn').disabled = false;
+                }
+                document.getElementById('sendReplyBtn').style.display = 'none';
+                currentGeneratedReply = null;
+                
+            } catch (error) { showToast('Failed to load email details', 'error'); }
+        }
+        
+        async function generateReply() {
+            if (!currentEmail) return;
+            document.getElementById('genReplyBtn').disabled = true;
+            document.getElementById('genReplyBtn').innerHTML = '<span class="spinner"></span> Generating...';
+            try {
+                const response = await fetch('/api/generate-reply', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email_id: currentEmail.email_id })
+                });
+                const data = await response.json();
+                currentGeneratedReply = data.reply;
+                document.getElementById('replyContainer').style.display = 'block';
+                document.getElementById('aiReplyText').innerHTML = escapeHtml(data.reply).replace(/\n/g, '<br>');
+                document.getElementById('genReplyBtn').style.display = 'none';
+                showToast('AI reply generated!', 'success');
+            } catch (error) { showToast('Failed to generate reply', 'error'); }
+            finally {
+                document.getElementById('genReplyBtn').disabled = false;
+                document.getElementById('genReplyBtn').innerHTML = '<i class="fas fa-robot"></i> Generate AI Reply';
+            }
+        }
+        
+        function useAIReply() {
+            document.getElementById('manualReplyContainer').style.display = 'block';
+            document.getElementById('manualReply').value = currentGeneratedReply;
+            document.getElementById('sendReplyBtn').style.display = 'inline-block';
+            document.getElementById('replyContainer').style.display = 'none';
+        }
+        
+        function composeManualReply() {
+            document.getElementById('manualReplyContainer').style.display = 'block';
+            document.getElementById('manualReply').value = '';
+            document.getElementById('sendReplyBtn').style.display = 'inline-block';
+            document.getElementById('replyContainer').style.display = 'none';
+        }
+        
+        async function sendReply() {
+            const replyText = document.getElementById('manualReply')?.value;
+            if (!replyText || !replyText.trim()) { showToast('Please enter a reply message', 'error'); return; }
+            document.getElementById('sendReplyBtn').disabled = true;
+            document.getElementById('sendReplyBtn').innerHTML = '<span class="spinner"></span> Sending...';
+            try {
+                const response = await fetch('/api/send-reply', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email_id: currentEmail.email_id, reply_text: replyText })
+                });
+                const data = await response.json();
+                if (data.success) { showToast('Reply sent successfully!', 'success'); closeModal(); refreshData(); }
+                else { showToast('Failed to send reply', 'error'); }
+            } catch (error) { showToast('Failed to send reply', 'error'); }
+            finally {
+                document.getElementById('sendReplyBtn').disabled = false;
+                document.getElementById('sendReplyBtn').innerHTML = '<i class="fas fa-paper-plane"></i> Send Reply';
+            }
+        }
+        
+        function filterEmails(filter) { currentFilter = filter; loadEmails(); }
+        function searchEmails() { loadEmails(); }
+        function clearSearch() { document.getElementById('searchInput').value = ''; loadEmails(); }
+        function closeModal() { document.getElementById('emailModal').style.display = 'none'; currentEmail = null; }
+        
+        async function clearHistory() {
+            if (confirm('⚠️ Are you sure you want to clear all email history?\n\nThis action cannot be undone.')) {
+                await fetch('/api/clear', { method: 'POST' });
+                refreshData();
+                showToast('History cleared successfully', 'success');
+            }
+        }
+        
+        function escapeHtml(text) { if (!text) return ''; const div = document.createElement('div'); div.textContent = text; return div.innerHTML; }
+        
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i> ${message}`;
+            document.body.appendChild(toast);
+            setTimeout(() => { toast.style.animation = 'slideIn 0.3s reverse'; setTimeout(() => toast.remove(), 300); }, 3000);
+        }
+        
+        setInterval(() => { if (!document.getElementById('progressContainer').style.display === 'block') refreshData(); }, 30000);
+        checkSession();
+    </script>
+</body>
+</html>
